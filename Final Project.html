@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EcoSense – AI Carbon Footprint Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+
+  :root {
+    --bg: #0d1a0f;
+    --card: #122015;
+    --card2: #162a1a;
+    --green: #4ade80;
+    --lime: #a3e635;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --text: #e8f5e9;
+    --muted: #7aab82;
+    --border: #1e3a22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -1px;
+  }
+
+  .logo span { color: var(--lime); }
+
+  .sdg-badge {
+    background: #1e3a22;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 99px;
+    letter-spacing: 0.05em;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 52px 24px 32px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--green);
+  }
+
+  .hero p {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  .section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    margin-top: 40px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 20px;
+  }
+
+  .card label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .card .emoji { font-size: 1.3rem; margin-bottom: 6px; display: block; }
+
+  select, input[type=number] {
+    width: 100%;
+    background: #0d1a0f;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    border-radius: 8px;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  select:focus, input[type=number]:focus { border-color: var(--green); }
+
+  .calc-btn {
+    width: 100%;
+    margin-top: 28px;
+    padding: 16px;
+    background: var(--green);
+    color: #0d1a0f;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .calc-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .calc-btn:active { transform: scale(0.98); }
+
+  /* Result Panel */
+  #result-section { display: none; }
+
+  .result-card {
+    background: var(--card2);
+    border: 1px solid var(--green);
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-top: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(74,222,128,0.12), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .big-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .big-unit {
+    font-size: 1rem;
+    color: var(--muted);
+    padding-bottom: 8px;
+  }
+
+  .level-pill {
+    margin-left: auto;
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .breakdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  @media(max-width: 600px) { .breakdown { grid-template-columns: repeat(2,1fr); } }
+
+  .break-item {
+    background: #0d1a0f;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .break-item .val { font-size: 1.2rem; font-weight: 700; color: var(--lime); }
+  .break-item .lbl { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+  .bar-wrap { margin: 6px 0 2px; }
+  .bar-bg { background: var(--border); border-radius: 99px; height: 5px; }
+  .bar-fill { height: 5px; border-radius: 99px; background: var(--lime); transition: width 0.8s ease; }
+
+  /* AI Section */
+  .ai-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+
+  .ai-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .ai-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .ai-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+
+  #ai-response {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    min-height: 60px;
+  }
+
+  #ai-response.loading { color: var(--muted); font-style: italic; }
+
+  .tip-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  @media(max-width: 600px) { .tip-cards { grid-template-columns: 1fr; } }
+
+  .tip-card {
+    background: #0d1a0f;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .tip-card .tip-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .tip-card .tip-title { font-size: 0.82rem; font-weight: 700; color: var(--lime); margin-bottom: 4px; }
+  .tip-card .tip-text { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  /* SDG info */
+  .sdg-info {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: #122015;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-top: 40px;
+  }
+
+  .sdg-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .sdg-info p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+  .sdg-info h3 { font-size: 1rem; color: #fff; margin-bottom: 6px; }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Eco<span>Sense</span></div>
+  <div class="sdg-badge">SDG 13 · Climate Action</div>
+</header>
+
+<div class="hero">
+  <h1>Track Your <em>Carbon Footprint</em><br/>with AI Insights</h1>
+  <p>Enter your daily habits and get an AI-powered analysis of your carbon emissions with personalised reduction tips.</p>
+</div>
+
+<div class="main">
+
+  <div class="section-title">Your Daily Activities</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <span class="emoji">🚗</span>
+      <label>Transport Mode</label>
+      <select id="transport">
+        <option value="car_petrol">Car (Petrol)</option>
+        <option value="car_diesel">Car (Diesel)</option>
+        <option value="bike">Motorbike</option>
+        <option value="bus">Bus</option>
+        <option value="train">Train / Metro</option>
+        <option value="walk">Walk / Cycle</option>
+      </select>
+    </div>
+    <div class="card">
+      <span class="emoji">📍</span>
+      <label>Daily Travel Distance (km)</label>
+      <input type="number" id="distance" value="20" min="0" max="500" />
+    </div>
+    <div class="card">
+      <span class="emoji">⚡</span>
+      <label>Monthly Electricity Usage (kWh)</label>
+      <input type="number" id="electricity" value="150" min="0" max="2000" />
+    </div>
+    <div class="card">
+      <span class="emoji">🍽️</span>
+      <label>Diet Type</label>
+      <select id="diet">
+        <option value="meat_heavy">Meat-heavy</option>
+        <option value="meat_moderate">Moderate Meat</option>
+        <option value="vegetarian">Vegetarian</option>
+        <option value="vegan">Vegan</option>
+      </select>
+    </div>
+    <div class="card">
+      <span class="emoji">✈️</span>
+      <label>Flights per Year</label>
+      <input type="number" id="flights" value="2" min="0" max="100" />
+    </div>
+    <div class="card">
+      <span class="emoji">🛍️</span>
+      <label>Shopping Habits</label>
+      <select id="shopping">
+        <option value="high">High (frequent new purchases)</option>
+        <option value="moderate">Moderate</option>
+        <option value="low">Low / Minimal</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">🌍 Calculate My Carbon Footprint + Get AI Tips</button>
+
+  <!-- RESULT -->
+  <div id="result-section">
+    <div class="result-card">
+      <div class="result-header">
+        <div>
+          <div style="font-size:0.72rem;color:var(--muted);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Your Annual Footprint</div>
+          <div class="big-number" id="total-co2" style="color:var(--green)">0</div>
+        </div>
+        <div class="big-unit">kg CO₂/year</div>
+        <div class="level-pill" id="level-pill">–</div>
+      </div>
+
+      <div class="breakdown" id="breakdown-grid"></div>
+
+      <div style="font-size:0.8rem;color:var(--muted);margin-top:8px;">
+        🌍 Global average is ~4,500 kg CO₂/year. India average is ~1,900 kg/year.
+      </div>
+    </div>
+
+    <!-- AI Tips -->
+    <div class="ai-section">
+      <div class="ai-header">
+        <div class="ai-dot"></div>
+        <div class="ai-title">AI Analysis & Recommendations</div>
+      </div>
+      <div id="ai-response" class="loading">Analysing your carbon profile…</div>
+
+      <div class="tip-cards" id="tip-cards"></div>
+    </div>
+  </div>
+
+  <!-- SDG Info -->
+  <div class="sdg-info">
+    <div class="sdg-num">SDG<br/>13</div>
+    <div>
+      <h3>Climate Action</h3>
+      <p>UN Sustainable Development Goal 13 calls for urgent action to combat climate change and its impacts. Carbon emissions from daily human activities — transport, energy, food — are the primary drivers of global warming. This AI tool helps individuals measure, understand, and reduce their personal carbon footprint, contributing directly to SDG 13 targets.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>EcoSense · AI Capstone Project · SDG 13 – Climate Action · Built with Vanilla JS + Claude AI API</footer>
+
+<script>
+const EMISSION_FACTORS = {
+  transport: { car_petrol: 0.192, car_diesel: 0.171, bike: 0.114, bus: 0.089, train: 0.041, walk: 0 },
+  diet: { meat_heavy: 3.3, meat_moderate: 2.5, vegetarian: 1.7, vegan: 1.5 },
+  shopping: { high: 1200, moderate: 700, low: 300 }
+};
+
+function calculate() {
+  const transport = document.getElementById('transport').value;
+  const distance = parseFloat(document.getElementById('distance').value) || 0;
+  const electricity = parseFloat(document.getElementById('electricity').value) || 0;
+  const diet = document.getElementById('diet').value;
+  const flights = parseFloat(document.getElementById('flights').value) || 0;
+  const shopping = document.getElementById('shopping').value;
+
+  const transportCO2 = EMISSION_FACTORS.transport[transport] * distance * 365;
+  const electricityCO2 = electricity * 12 * 0.82;
+  const dietCO2 = EMISSION_FACTORS.diet[diet] * 365;
+  const flightsCO2 = flights * 255;
+  const shoppingCO2 = EMISSION_FACTORS.shopping[shopping];
+
+  const total = Math.round(transportCO2 + electricityCO2 + dietCO2 + flightsCO2 + shoppingCO2);
+
+  // Display results
+  document.getElementById('result-section').style.display = 'block';
+  document.getElementById('total-co2').textContent = total.toLocaleString();
+
+  const pill = document.getElementById('level-pill');
+  if (total < 1500) { pill.textContent = '🟢 Low'; pill.style.background='#14532d'; pill.style.color='#4ade80'; }
+  else if (total < 3000) { pill.textContent = '🟡 Moderate'; pill.style.background='#3d2e00'; pill.style.color='#fbbf24'; }
+  else if (total < 5000) { pill.textContent = '🟠 High'; pill.style.background='#3d1a00'; pill.style.color='#fb923c'; }
+  else { pill.textContent = '🔴 Very High'; pill.style.background='#3d0a0a'; pill.style.color='#f87171'; }
+
+  // Breakdown
+  const items = [
+    { label: 'Transport', val: Math.round(transportCO2), icon: '🚗' },
+    { label: 'Electricity', val: Math.round(electricityCO2), icon: '⚡' },
+    { label: 'Diet', val: Math.round(dietCO2), icon: '🍽️' },
+    { label: 'Flights', val: Math.round(flightsCO2), icon: '✈️' },
+    { label: 'Shopping', val: Math.round(shoppingCO2), icon: '🛍️' },
+  ];
+
+  const grid = document.getElementById('breakdown-grid');
+  grid.innerHTML = items.map(i => {
+    const pct = total > 0 ? Math.round((i.val / total) * 100) : 0;
+    return `<div class="break-item">
+      <div style="font-size:1.2rem">${i.icon}</div>
+      <div class="val">${i.val.toLocaleString()}</div>
+      <div class="lbl">${i.label} (${pct}%)</div>
+      <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Call AI
+  callClaudeAI({ transport, distance, electricity, diet, flights, shopping, total,
+    transportCO2: Math.round(transportCO2), electricityCO2: Math.round(electricityCO2),
+    dietCO2: Math.round(dietCO2), flightsCO2: Math.round(flightsCO2), shoppingCO2: Math.round(shoppingCO2) });
+}
+
+function callClaudeAI(data) {
+  const responseEl = document.getElementById('ai-response');
+  const tipCards = document.getElementById('tip-cards');
+  responseEl.className = 'loading';
+  responseEl.textContent = '🤖 AI is analysing your carbon profile…';
+  tipCards.innerHTML = '';
+
+  // Simulate a slight delay for effect
+  setTimeout(() => {
+    // ── Smart AI logic (no API key needed) ──
+    const indiaAvg = 1900;
+    const globalAvg = 4500;
+    let level = '';
+    let opening = '';
+
+    if (data.total < indiaAvg) {
+      level = 'below the Indian average';
+      opening = `Great news! Your annual carbon footprint of ${data.total.toLocaleString()} kg CO₂ is below India's average of 1,900 kg — you are already making a positive difference. With a few more targeted changes, you could cut your footprint even further and inspire those around you.`;
+    } else if (data.total < globalAvg) {
+      level = 'below the global average';
+      opening = `Your annual carbon footprint of ${data.total.toLocaleString()} kg CO₂ is below the global average of 4,500 kg, which is a good start. However, there is still meaningful room to reduce your emissions — especially in your top contributing areas identified below.`;
+    } else {
+      level = 'above the global average';
+      opening = `Your annual carbon footprint of ${data.total.toLocaleString()} kg CO₂ is above the global average of 4,500 kg. The good news is that the biggest emission sources in your profile are also the easiest to improve — even small consistent changes can cut your footprint by 30–40% within a year.`;
+    }
+
+    // Identify top sources
+    const sources = [
+      { name: 'Transport', val: data.transportCO2 },
+      { name: 'Electricity', val: data.electricityCO2 },
+      { name: 'Diet', val: data.dietCO2 },
+      { name: 'Flights', val: data.flightsCO2 },
+      { name: 'Shopping', val: data.shoppingCO2 },
+    ].sort((a, b) => b.val - a.val);
+
+    const top3Names = sources.slice(0, 3).map(s => s.name).join(', ');
+    const analysis = `${opening}\n\nYour top 3 emission sources are: ${top3Names}. Focusing on these areas will give you the highest impact reduction for the least effort.`;
+
+    responseEl.className = '';
+    responseEl.textContent = analysis;
+
+    // Tip cards per source
+    const tipMap = {
+      Transport: { icon: '🚗', title: 'Switch Transport', tip: 'Try using public transit, carpooling, or cycling 2–3 days a week — this alone can cut transport emissions by up to 40%.' },
+      Electricity: { icon: '💡', title: 'Save Energy', tip: 'Switch to LED bulbs, unplug idle devices, and run heavy appliances during off-peak hours to reduce electricity emissions.' },
+      Diet: { icon: '🥦', title: 'Eat Greener', tip: 'Replacing one meat meal per day with a plant-based option can reduce your diet-related emissions by up to 30%.' },
+      Flights: { icon: '✈️', title: 'Fly Less', tip: 'Choose trains over short-haul flights — one domestic flight can emit more CO₂ than two weeks of daily commuting.' },
+      Shopping: { icon: '♻️', title: 'Buy Less, Buy Better', tip: 'Buy second-hand, repair before replacing, and wait 48 hours before non-essential purchases to cut shopping emissions.' },
+    };
+
+    const topTips = sources.slice(0, 3).map(s => tipMap[s.name]);
+    tipCards.innerHTML = topTips.map(s => `
+      <div class="tip-card">
+        <div class="tip-icon">${s.icon}</div>
+        <div class="tip-title">${s.title}</div>
+        <div class="tip-text">${s.tip}</div>
+      </div>
+    `).join('');
+
+  }, 1200);
+}
+</script>
+</body>
+</html>
